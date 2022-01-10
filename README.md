@@ -7,7 +7,7 @@ The purpose of this game is for entertainment.
 
 
 ## Description
-A two-dimensional shooter, free for all arcade game
+A two-dimensional shooter, 1v1 style arcade game
 
 
 ## Target Audience

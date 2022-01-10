@@ -9,6 +9,7 @@ public class PlayerController : MonoBehaviour
     public Camera cam;
     public GameObject bullet;
     public Transform firePoint;
+
     [Header("Parameters")]
     public float speed;
     [Tooltip("Possibly does not change the rotation speed")]
@@ -17,7 +18,7 @@ public class PlayerController : MonoBehaviour
 
     Vector3 mousePosition;
     Vector3 movement;
-    bool canShoot;
+    bool canShoot; 
 
     public void Start() {
         canShoot = true;
@@ -51,7 +52,7 @@ public class PlayerController : MonoBehaviour
     }
     // TODO: Animate the cylinder to go back when shooting
     public IEnumerator Shoot(float time) {
-        GameObject newBullet = (GameObject) Instantiate(bullet, firePoint.position, Quaternion.identity);
+        GameObject newBullet = (GameObject) Instantiate(bullet, firePoint.position, firePoint.rotation); 
         yield return new WaitForSeconds(time);
         canShoot = true;
     }

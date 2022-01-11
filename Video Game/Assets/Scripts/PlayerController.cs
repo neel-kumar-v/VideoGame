@@ -12,8 +12,6 @@ public class PlayerController : MonoBehaviour
 
     [Header("Parameters")]
     public float speed;
-    [Tooltip("Possibly does not change the rotation speed")]
-    public float rotationSpeed;
     public float reloadTime;
 
     Vector3 mousePosition;
@@ -37,7 +35,7 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         movement = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
-        rb.MovePosition(rb.position + movement * speed * Time.fixedDeltaTime);
+        rb.velocity = movement * speed;
     }
 
     public void Rotate() {

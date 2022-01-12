@@ -25,6 +25,8 @@ public class AIMovement : MonoBehaviour
     bool canShoot;
 
     public Vector3 posToStartRangeAt;
+    public float distance;
+    private Vector3 vel;
 
     void Start() {
         player = GameObject.FindGameObjectWithTag("Player").transform;
@@ -33,17 +35,30 @@ public class AIMovement : MonoBehaviour
     }
 
     void FixedUpdate() {
-        float distance = Vector3.Distance(transform.position, player.position);
+        if(player == null) return;
+        distance = Vector3.Distance(transform.position, player.position);
+        vel = (transform.position - player.position).normalized; 
         if(distance > stop) {
-            rb.velocity = player.position.normalized * speed; // Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
+            rb.velocity = vel * -speed; // Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
+            vel = vel * speed;
+            
         } else if(distance < stop && distance > retreat) {
             rb.velocity *= 0.9f;
+            vel *= 0.9f;
+            
         } else if(distance < retreat) {
-            rb.velocity = player.position.normalized * -speed; // Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
+            rb.velocity = vel * speed; // Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
+            vel = vel * -speed;
+            
+        } else {
+            rb.velocity = vel * -speed; // Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
+            vel = vel * speed;
+            
         }
     }
 
     void Update() {
+        if(player == null) return;
         transform.LookAt(Vector3.Lerp(transform.position, player.position, Time.deltaTime));
         if(CheckAim() && canShoot) {
             canShoot = false;
@@ -53,6 +68,7 @@ public class AIMovement : MonoBehaviour
 
     public IEnumerator Shoot(float time) {
         GameObject newBullet = (GameObject) Instantiate(bullet, firePoint.position, firePoint.rotation); 
+        newBullet.GetComponent<Bullet>().player = false;
         yield return new WaitForSeconds(time);
         canShoot = true;
     }

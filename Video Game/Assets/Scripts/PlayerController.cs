@@ -51,6 +51,7 @@ public class PlayerController : MonoBehaviour
     // TODO: Animate the cylinder to go back when shooting
     public IEnumerator Shoot(float time) {
         GameObject newBullet = (GameObject) Instantiate(bullet, firePoint.position, firePoint.rotation); 
+        newBullet.GetComponent<Bullet>().player = true;
         yield return new WaitForSeconds(time);
         canShoot = true;
     }

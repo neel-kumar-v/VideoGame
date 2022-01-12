@@ -75,14 +75,14 @@ public class BotMovement : MonoBehaviour
 
     public void Move(Vector3 pos, bool who) {
         Vector3 moveDirection = Vector3.MoveTowards(transform.position, pos, speed * Time.deltaTime);
-        Debug.Log(moveDirection);
+        
         rb.velocity = -moveDirection;
     }
 
     public IEnumerator GenerateRandomPos(float time) {
         canGenerateNewPosition = false;
         movement = new Vector3(Mathf.Clamp(transform.position.x + Random.Range(-20f, 20f), -50f, 50f), transform.position.y, Mathf.Clamp(transform.position.z + Random.Range(-20f, 20f), -30f, 30f));
-        // Debug.Log(movement);
+
         yield return new WaitForSeconds(time);
         canGenerateNewPosition = true;
     }

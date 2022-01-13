@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
 
 public class Health : MonoBehaviour
 {
@@ -14,6 +15,7 @@ public class Health : MonoBehaviour
     public bool canRegen;
 
     [Header("Unity Setup")]
+    public bool runUI = true;
     public Slider healthBar;
     public Image colorBar;
     public Gradient color;
@@ -23,6 +25,7 @@ public class Health : MonoBehaviour
     public float smoothStep;
 
     bool dead;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -57,6 +60,7 @@ public class Health : MonoBehaviour
         if(health <= 0) {
             dead = true;
             UpdateUI();
+            Stats.OnKill((maxHealth * regenSpeed * 2) + maxArmor);
             Destroy(gameObject);
             // TODO Animations
         }
@@ -73,6 +77,7 @@ public class Health : MonoBehaviour
     }
 
     public void UpdateUI() {
+        if(!runUI) return;
         if(dead) {
             healthBar.value = health;
             armorBar.value = armor;

@@ -19,7 +19,7 @@ public class AIMovement : MonoBehaviour
     public Transform rangePoint;
     public LayerMask layerMask;
 
-    private Transform player;
+    public Transform player;
 
     Rigidbody rb;
     bool canShoot;

@@ -19,10 +19,10 @@ public class Health : MonoBehaviour
     public Slider healthBar;
     public Image colorBar;
     public Gradient color;
-    [Space(10)]
     public Slider armorBar;
-    [Space(10)]
     public float smoothStep;
+    [Space(10)]
+    public GameObject deadFx;
 
     bool dead;
 
@@ -60,7 +60,8 @@ public class Health : MonoBehaviour
         if(health <= 0) {
             dead = true;
             UpdateUI();
-            Stats.OnKill((maxHealth * regenSpeed * 2) + maxArmor);
+            Stats.OnKill((maxHealth * (canRegen ? regenSpeed : 0f) * 2) + maxArmor);
+            Destroy((GameObject) Instantiate(deadFx, transform.position, transform.rotation), 3f);
             Destroy(gameObject);
             // TODO Animations
         }

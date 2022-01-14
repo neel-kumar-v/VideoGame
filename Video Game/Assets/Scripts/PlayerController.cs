@@ -13,6 +13,8 @@ public class PlayerController : MonoBehaviour
     [Header("Parameters")]
     public float speed;
     public float reloadTime;
+    public float recoil;
+    public float recoilTime;
 
     Vector3 mousePosition;
     Vector3 movement;
@@ -55,4 +57,5 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(time);
         canShoot = true;
     }
+
 }

@@ -10,20 +10,51 @@ public class ShopMenu : MonoBehaviour
     [Space(10)]
     public GameObject shopPrompt;
 
-    public void ToggleShop() {
-        foreach (GameObject ui in uiElementsToRemove)
-        {
-            ui.SetActive(inShop);
-        }
-        foreach (GameObject ui in uiElementsToAdd)
-        {
-            ui.SetActive(!inShop);
-        }
-        Time.timeScale = inShop ? 1f : 0f;
-        inShop = !inShop;
+    public static bool canPause = true;
+
+    public void ShopOn() {
+        inShop = true;
+        canPause = !inShop;
+        AddShopUI();
+    }
+
+    public void ShopOff() {
+        inShop = false;
+        canPause = !inShop;
+        AddGameUI();
+        RemoveShopUI();
     }
 
     public void Prompt() {
-        
+        shopPrompt.SetActive(true);
+        RemoveGameUI();
     }
+
+    public void RemoveGameUI() {
+        foreach (GameObject uiElementToRemove in uiElementsToRemove)
+        {
+            uiElementToRemove.SetActive(false);
+        }
+    }
+
+    public void AddGameUI() {
+        foreach (GameObject uiElementToRemove in uiElementsToRemove)
+        {
+            uiElementToRemove.SetActive(true);
+        }
+    }
+
+    public void RemoveShopUI() {
+        foreach (GameObject uiElementToAdd in uiElementsToAdd)
+        {
+            uiElementToAdd.SetActive(false);
+        }
+    }
+    public void AddShopUI() {
+        foreach (GameObject uiElementToAdd in uiElementsToAdd)
+        {
+            uiElementToAdd.SetActive(true);
+        }
+    }
+
 }

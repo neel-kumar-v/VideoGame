@@ -11,6 +11,8 @@ public class AIMovement : MonoBehaviour
     public float reloadTime;
     public float range;
     public float offset;
+    public float dodgeRange;
+    [Range(0f, 1f)] public float dodgeReaction;
 
 
     [Header("Unity Setup")]
@@ -18,47 +20,107 @@ public class AIMovement : MonoBehaviour
     public Transform firePoint;
     public Transform rangePoint;
     public LayerMask layerMask;
-
+    public float countdown;
     public Transform player;
+    public Vector3 startPos;
 
     Rigidbody rb;
     bool canShoot;
+    bool canDodge;
+    Bullet b;
 
-    public Vector3 posToStartRangeAt;
-    public float distance;
+    Vector3 posToStartRangeAt;
+    float distance;
     private Vector3 vel;
 
-    void Start() {
+    Renderer pRend;
+
+    public void Reset() {
+        b = bullet.GetComponent<Bullet>();
+        transform.position = startPos;
+        transform.LookAt(Vector3.Lerp(transform.position, new Vector3(0f, 0f, 0f), Time.deltaTime));
+        speed /= b.weight;
+        reloadTime = b.reload;
+        if(rb != null) {     
+            rb.velocity = Vector3.zero;
+        }
+        player = null;
+        rb = null;
+        StartCoroutine(Countdown(countdown));
+    }
+
+    public IEnumerator Countdown(float time) {
+        canShoot = false;
+        transform.position = new Vector3(15f * (float) (Random.Range(0, 2) * 2 - 1), 2f, -15f);
+        yield return new WaitForSeconds(time);
+        canShoot = true;
         player = GameObject.FindGameObjectWithTag("Player").transform;
         rb = GetComponent<Rigidbody>();
-        canShoot = true;
+        pRend = player.gameObject.GetComponent<Renderer>();
     }
 
     void FixedUpdate() {
-        if(player == null) return;
+        if(player == null || rb == null || !pRend.enabled) return;
+
+        // if(AvoidBullets()) return;
+
         distance = Vector3.Distance(transform.position, player.position);
         vel = (transform.position - player.position).normalized; 
         if(distance > stop) {
-            rb.velocity = vel * -speed; // Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
+            rb.velocity = vel * -speed;
             vel = vel * speed;
             
         } else if(distance < stop && distance > retreat) {
-            rb.velocity *= 0.9f;
-            vel *= 0.9f;
+            rb.velocity *= 0.95f;   
+            vel *= 0.95f;
             
         } else if(distance < retreat) {
-            rb.velocity = vel * speed; // Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
+            rb.velocity = vel * speed;
             vel = vel * -speed;
             
         } else {
-            rb.velocity = vel * -speed; // Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
+            rb.velocity = vel * -speed;
             vel = vel * speed;
             
         }
     }
 
+    public bool AvoidBullets() {
+        Bullet[] bullets = GameObject.FindObjectsOfType<Bullet>();
+
+        Bullet correctBullet = null;
+        distance = Mathf.Infinity;
+
+        foreach (Bullet bul in bullets)
+        {
+            if(bul.player) {
+                float newDistance = Vector3.Distance(transform.position, bul.transform.position);
+                if(distance > newDistance) {
+                    distance = newDistance;
+                    correctBullet = bul;
+                }
+            }
+        }
+        Debug.Log(correctBullet != null);
+        if(correctBullet != null) {
+            vel = (transform.position - correctBullet.transform.position).normalized;
+
+            if(distance < dodgeRange) {
+                Debug.Log("$2");
+                rb.AddForce(vel, ForceMode.Impulse);
+                vel = vel * speed;
+            }
+        }
+        Debug.Log("$3");
+        return false;
+    }
+
+
+
+
     void Update() {
         if(player == null) return;
+        
         transform.LookAt(Vector3.Lerp(transform.position, player.position, Time.deltaTime));
         if(CheckAim() && canShoot) {
             canShoot = false;

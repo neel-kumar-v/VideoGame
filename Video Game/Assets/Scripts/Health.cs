@@ -23,16 +23,44 @@ public class Health : MonoBehaviour
     public float smoothStep;
     [Space(10)]
     public GameObject deadFx;
+    [Space(10)]
+    public bool isPlayer;
 
-    bool dead;
+    public bool dead;
+
+    PlayerController controller;
+    Renderer rend;
+    AIMovement enemyController;
+    SphereCollider sphereCollider;
+    Renderer[] cylinderRends;
+
+    float savedArmor;
+    [HideInInspector] public float startArmor;
 
     // Start is called before the first frame update
     void Start()
     {
+        startArmor = armor;
+        controller = GetComponent<PlayerController>();
+        enemyController = GetComponent<AIMovement>();
+        rend = GetComponent<Renderer>();
+        sphereCollider = GetComponent<SphereCollider>();
+        StartCoroutine(LateStart());
+    }
+
+    public IEnumerator LateStart() {
+        yield return new WaitForSeconds(1f);
+        cylinderRends = GetComponentsInChildren<Renderer>();
+    }
+
+
+    public void ResetHealth() {
         health = maxHealth; 
         healthBar.maxValue = maxHealth;
         healthBar.value = health;
+        colorBar.color = color.Evaluate(healthBar.value);
 
+        armor = startArmor;
         armorBar.maxValue = maxArmor;
         armorBar.value = armor;
     }
@@ -40,8 +68,15 @@ public class Health : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(rend.enabled) {
+            if(dead) {
+                SetState(true);
+            }
+            dead = false;
+        }
         Regen();
         UpdateUI();
+        // Debug.Log(healthBar.value);
     }
     public void ApplyDamage(float damage) {
         if(armor > 0) {
@@ -56,16 +91,28 @@ public class Health : MonoBehaviour
                 damage = 0f;
             }
         }
+
         health -= damage;
+
         if(health <= 0) {
             dead = true;
+
             UpdateUI();
-            Stats.OnKill((maxHealth * (canRegen ? regenSpeed : 0f) * 2) + maxArmor);
+
+            if(!isPlayer) {
+                float formula = ((maxHealth + maxHealth * (canRegen ? regenSpeed : 0f)) + maxArmor + startArmor) * 2;
+                Debug.Log(formula);
+                Stats.OnKill(formula);
+            }
+
             Destroy((GameObject) Instantiate(deadFx, transform.position, transform.rotation), 3f);
-            Destroy(gameObject);
-            // TODO Animations
+
+            ResetHealth();
+            
+            SetState(false);
         }
     }
+
 
     public void Regen(){
         if(health >= maxHealth) {
@@ -79,10 +126,9 @@ public class Health : MonoBehaviour
 
     public void UpdateUI() {
         if(!runUI) return;
-        if(dead) {
-            healthBar.value = health;
-            armorBar.value = armor;
-            return;
+        if(dead) {           
+            healthBar.value = 0f;
+            armorBar.value = 0f;
         }
         if(healthBar.value != health) {
             healthBar.value = Mathf.Lerp(healthBar.value, health, smoothStep * Time.deltaTime);
@@ -92,4 +138,27 @@ public class Health : MonoBehaviour
             armorBar.value = Mathf.Lerp(armorBar.value, armor, smoothStep * Time.deltaTime);
         }
     }
+
+    public void SetState(bool state) {
+        if(enabled) {
+            dead = false;
+            ResetHealth();
+        }
+        if(controller != null) {
+            controller.enabled = state;
+        }
+        if(enemyController != null) {
+            enemyController.enabled = state;
+        }
+        rend.enabled = state;
+        sphereCollider.enabled = state;
+
+        foreach (Renderer cylinderRend in cylinderRends)
+        {      
+            cylinderRend.enabled = state;
+        }
+    }
+
+    
+
 }

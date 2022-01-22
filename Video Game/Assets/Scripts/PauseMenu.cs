@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PauseMenu : MonoBehaviour
 {
@@ -11,11 +12,13 @@ public class PauseMenu : MonoBehaviour
     public GameObject pauseButton;
     public GameObject blur;
 
+    bool wasShopOpen;
+
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && !ShopMenu.inShop) {
+        if (Input.GetKeyDown(KeyCode.Escape) && !ShopMenu.inShop && !shopPrompt.activeInHierarchy) {
             Toggle();
         }
     }
@@ -33,10 +36,10 @@ public class PauseMenu : MonoBehaviour
     }
 
     public void LoadMenu() {
-
+        SceneManager.LoadScene("Main Menu");
     } 
 
     public void Quit() {
-        
+        Application.Quit();
     }
 }

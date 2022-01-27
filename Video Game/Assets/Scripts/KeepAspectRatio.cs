@@ -4,6 +4,11 @@ using System.Collections;
  
  public class KeepAspectRatio : MonoBehaviour
  {
+     Camera cam;
+     void Start() {
+         // obtain cam component so we can modify its viewport
+         cam = GetComponent<Camera>();
+     }
      void Update()
      {
          // set the desired aspect ratio (the values in this example are
@@ -16,9 +21,6 @@ using System.Collections;
  
          // current viewport height should be scaled by this amount
          float scaleheight = windowaspect / targetaspect;
- 
-         // obtain cam component so we can modify its viewport
-         Camera cam = GetComponent<Camera>();
  
          // if scaled height is less than current height, add letterbox
          if (scaleheight < 1.0f)

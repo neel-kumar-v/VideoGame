@@ -7,11 +7,11 @@ public class BulletsStatsParser : MonoBehaviour
 {
     public BulletStats bulletStats;
 
-    [Space(10)]
+    [Header("Weapon")]
     public Text gunName;
-    public Text buy;
+    public Text price;
 
-    [Space(10)]
+    [Header("Stats")]
     public Text dmg;
     public Text reload;
     public Text bSpeed;
@@ -21,10 +21,10 @@ public class BulletsStatsParser : MonoBehaviour
     public Text eRad;
     public Text weight;
 
-    [Space(10)]
+    [Header("Info")]
     public Text info;
 
-
+    // This just sets all the UI to displaying the correct gun information
     void Start() {
         Bullet b = bulletStats.bullet;
         // Accessible Attributes
@@ -37,16 +37,17 @@ public class BulletsStatsParser : MonoBehaviour
             // float weight;
 
         gunName.text = bulletStats.gunName;
-        buy.text = "$" + bulletStats.price.ToString();
+        price.text = "$" + bulletStats.price.ToString();
 
         dmg.text = "Damage: " + b.damage.ToString();
         reload.text = "Reload Time: " + b.reload.ToString();
         bSpeed.text = "Bullet Speed: " + b.speed.ToString();
         pierce.text = "Pierce: " + b.pierce.ToString();
         
-        explode.text = "Explosive: " + (b.explode ? "Yes" : "No");
+        explode.text = "Explosive: " + (b.explosive ? "Yes" : "No");
 
-        if(b.explode) {
+        // Only show the explosive stats if the bullet is explosive
+        if(b.explosive) {
             eDmg.text = "Explosive Damage: " + b.explosionDamage.ToString();
             eRad.text = "Explosion Radius: " + b.explosionRadius.ToString();
         } else {

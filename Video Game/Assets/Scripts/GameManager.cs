@@ -10,17 +10,11 @@ public class GameManager : MonoBehaviour
     public GameObject player;
         PlayerController playerMovement;
         Health playerHealth;
-        Renderer playerRenderer;
-        Renderer[] playerRenderers;
-        SphereCollider playerSC;
-
     public GameObject enemy;
         AIMovement enemyMovement;
         Health enemyHealth;
-        Renderer enemyRenderer;
-        Renderer[] enemyRenderers;
-        SphereCollider enemySC;
 
+    [Header("Countdown")]
     public float countdown = 3f;
     public GameObject countdownObj;
     public Text tCountdownText;
@@ -61,13 +55,42 @@ public class GameManager : MonoBehaviour
     public float enemyDamageScaling;
 
     [HideInInspector] public int rounds;
-    int gunRounds;
-    BulletStats[] gunsToPickFrom;
+    private int gunRounds;
+    private BulletStats[] gunsToPickFrom;
 
-    BulletStats[] currentCountry;
+    private BulletStats[] currentCountry;
 
     #region GameLoop 
 
+    public void Update() {
+        if(!playerMovement.enabled && !calledPlayer) {
+            onPlayerDead.Invoke();
+            calledPlayer = true;
+        }
+        if(!enemyMovement.enabled && !calledEnemies) {
+            onAllEnemiesDead.Invoke();
+            StartCoroutine(DeleteAllBullets());
+            calledEnemies = true;
+        }
+        if(playerMovement.enabled && calledPlayer) {
+            calledPlayer = true;
+        }
+        if(enemyMovement.enabled && calledEnemies) {
+            calledEnemies = false;
+        }
+        if(enemyCountryText.text != enemyCountry) {
+            UpdateCountries();
+        }
+    }
+
+    public void Win() {
+        winScene.SetActive(true);
+    }
+
+
+    #endregion GameLoop
+
+    #region StartFunctions
     public void Start() {
         weapon = (BulletStats) ScriptableObject.CreateInstance("BulletStats");
         weapon.gunName = "Base Bullet";
@@ -75,24 +98,15 @@ public class GameManager : MonoBehaviour
 
         playerMovement = player.GetComponent<PlayerController>();
         playerHealth = player.GetComponent<Health>();
-        playerRenderer = player.GetComponent<Renderer>();
-        playerSC = player.GetComponent<SphereCollider>();
-        playerRenderers = player.GetComponentsInChildren<Renderer>();
 
         enemyMovement = enemy.GetComponent<AIMovement>();
         enemyHealth = enemy.GetComponent<Health>();
-        enemyRenderer = enemy.GetComponent<Renderer>();
-        enemyRenderers = enemy.GetComponentsInChildren<Renderer>();
-        enemySC = enemy.GetComponent<SphereCollider>();
 
         SetEnemyCountry();
-        
         Reset();
         StartShopUI();
     }
 
-    #region StartFunctions
-    
     public void SetEnemyGun() {
         gunsToPickFrom = new BulletStats[3];
 
@@ -125,67 +139,45 @@ public class GameManager : MonoBehaviour
 
     #endregion StartFunctions
 
-    public void Update() {
-        if(!playerMovement.enabled && !calledPlayer) {
-            onPlayerDead.Invoke();
-            calledPlayer = true;
-        }
-        if(!enemyMovement.enabled && !calledEnemies) {
-            onAllEnemiesDead.Invoke();
-            StartCoroutine(DeleteAllBullets());
-            calledEnemies = true;
-        }
-        if(playerMovement.enabled && calledPlayer) {
-            calledPlayer = true;
-        }
-        if(enemyMovement.enabled && calledEnemies) {
-            calledEnemies = false;
-        }
-        if(enemyCountryText.text != enemyCountry) {
-            UpdateCountries();
-        }
-    }
-
-    public void Win() {
-        winScene.SetActive(true);
-    }
-
+    #region Reset
     public void Reset() {
 
         rounds++;
 
+        UpdateCountryByRound();
+        UpdateEnemyGunByRound();
+
+        StartCoroutine(DeleteAllBullets());
+
+        playerMovement.enabled = true;
+        ResetObject(player);
+
+        enemyMovement.enabled = true;        
+        ResetObject(enemy);
+
+        float multiplier = (float) rounds - 1;
+        enemyHealth.startArmor = 125 * multiplier;
+        enemyHealth.regenSpeed = 1f + multiplier - 1;
+        enemyMovement.speed = enemyMovement.speed + enemySpeedScaling * multiplier;
+
+
+        // -- SCALING --
+        // Bullet bullet = enemyMovement.bullet.GetComponent<Bullet>();
+        // bullet.damage = bullet.damage + enemyDamageScaling * multiplier;
+        // bullet.speed = bullet.speed + enemyDamageScaling * multiplier;
+        StartCoroutine(CountdownCoroutine());
+    }
+
+    public void UpdateCountryByRound() {
         if(rounds == 6) {
             Win();
             return;
         } else {
             enemyCountry = enemyCountries[rounds - 1];
         }
+    }
 
-        float multiplier = (float) rounds - 1;
-
-        StartCoroutine(DeleteAllBullets());
-
-        #region Player
-
-        playerMovement.enabled = true;
-        foreach (Renderer tempRend in playerRenderers) tempRend.enabled = true;
-        playerRenderer.enabled = true;
-        playerHealth.ResetHealth();
-        playerSC.enabled = true;
-        playerMovement.Reset();
-
-        #endregion Player
-
-        #region Enemy
-
-        enemyMovement.enabled = true;        
-        foreach (Renderer tempRend in enemyRenderers) tempRend.enabled = true;
-        enemyRenderer.enabled = true;
-        enemyHealth.startArmor = 125 * multiplier;
-        enemyHealth.regenSpeed = 1f + multiplier - 1;
-        enemyHealth.ResetHealth();
-        enemySC.enabled = true;
-
+    public void UpdateEnemyGunByRound() {
         if(rounds == 1) {
             enemyMovement.bullet = baseBullet; 
         } else {
@@ -197,52 +189,48 @@ public class GameManager : MonoBehaviour
                 gunRounds = 2;
             }
         } 
-
         SetEnemyGun();
+    }
 
-        enemyMovement.Reset();
-        enemyMovement.speed = enemyMovement.speed + enemySpeedScaling * multiplier;
-
-        #endregion Enemy
-
-        // Bullet bullet = enemyMovement.bullet.GetComponent<Bullet>();
-        // bullet.damage = bullet.damage + enemyDamageScaling * multiplier;
-        // bullet.speed = bullet.speed + enemyDamageScaling * multiplier;
-        StartCoroutine(Countdown());
+    public void ResetObject(GameObject obj) {
+        foreach (Renderer tempRend in obj.GetComponentsInChildren<Renderer>())tempRend.enabled = true;
+        obj.GetComponent<Renderer>().enabled = true;
+        obj.GetComponent<SphereCollider>().enabled = true;
+        obj.GetComponent<Health>().ResetHealth();
     }
 
 
-    public IEnumerator Countdown() {
+    public IEnumerator CountdownCoroutine() {
         tCountdownText = countdownObj.GetComponent<Text>();
 
         yield return new WaitForSeconds(0.5f);
 
         WaitForSeconds waitTime = new WaitForSeconds(1f);
 
-        StartCoroutine(Anim("Round " + rounds.ToString()));
+        StartCoroutine(AnimateCountdownTextCoroutine("Round " + rounds.ToString()));
         yield return waitTime;
 
-        StartCoroutine(Anim(3f.ToString()));
+        StartCoroutine(AnimateCountdownTextCoroutine(3f.ToString()));
         yield return waitTime;
 
-        StartCoroutine(Anim(2f.ToString()));
+        StartCoroutine(AnimateCountdownTextCoroutine(2f.ToString()));
         yield return waitTime;
 
-        StartCoroutine(Anim(1f.ToString()));
+        StartCoroutine(AnimateCountdownTextCoroutine(1f.ToString()));
         yield return waitTime;
 
-        StartCoroutine(Anim("FIGHT!"));
+        StartCoroutine(AnimateCountdownTextCoroutine("FIGHT!"));
     }
 
 
-    public IEnumerator Anim(string num) {
+    public IEnumerator AnimateCountdownTextCoroutine(string num) {
         tCountdownText.text = num;
         countdownObj.SetActive(true);
         yield return new WaitForSeconds(0.35f);
         countdownObj.SetActive(false);
     }
 
-    #endregion GameLoop
+    #endregion Reset
 
     #region HelperFunctions
 
@@ -292,7 +280,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < weaponItems.Length; i++)
         {
             var parser = weaponItems[i].GetComponent<BulletsStatsParser>();
-            parser.bulletStats = currentCountry[i]; // sfsdf
+            parser.bulletStats = currentCountry[i]; // Sets the correct country's guns
         }
     }
 
@@ -338,8 +326,4 @@ public class GameManager : MonoBehaviour
     }
 
     #endregion ShopUI
-
-
-
-    
 }

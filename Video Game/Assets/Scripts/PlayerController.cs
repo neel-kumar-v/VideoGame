@@ -25,7 +25,7 @@ public class PlayerController : MonoBehaviour
     public float recoilTime;
     public float countdown;
 
-    Vector3 mousePosition;
+    Vector3 mousePositionInWorldSpace;
     Vector3 movement;
 
     bool canShoot; 
@@ -40,17 +40,23 @@ public class PlayerController : MonoBehaviour
 
     public void Start() {
         canShoot = true;
-        
+        Reset();
+    }
+
+    public void OnEnable() {
         Reset();
     }
 
     public void Reset() {
+        // Reset position, rotation, and velocity
         transform.position = new Vector3(15f * (float) (Random.Range(0, 2) * 2 - 1), 2f, 15f);
-        StartCoroutine(Countdown(countdown));
         rb.velocity = Vector3.zero;
         Vector3 lookDirection = Vector3.Lerp(transform.position, new Vector3(0f, 0f, 0f), Time.deltaTime);
         transform.LookAt(lookDirection); 
+
+        StartCoroutine(Countdown(countdown)); // be able to move only after the countdown
         
+        // make sure all stats are correct
         b = bullet.GetComponent<Bullet>();
         speed /= b.weight;
         reloadTime = b.reload;  
@@ -86,16 +92,22 @@ public class PlayerController : MonoBehaviour
     }
 
     public void Rotate() {
+        // Using the mousePosition, makes a line going out from the camera
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-        if(Physics.Raycast(ray, out hit, Mathf.Infinity)) {
-            mousePosition = new Vector3(hit.point.x, transform.position.y, hit.point.z);
-            // Debug.DrawLine(ray.origin, mousePosition, Color.blue);
+        if(Physics.Raycast(ray, out hit, Mathf.Infinity)) { // Whenever the line finally hits the ground
+            // This is the point where it hit the ground
+            // we use transform.position.y instead of hit.point.y, because we want our player to point straight and not at the ground
+            // transform.position.y is lined up with the player
+            mousePositionInWorldSpace = new Vector3(hit.point.x, transform.position.y, hit.point.z);
+            // Debug.DrawLine(ray.origin, mousePosition, Color.blue); // Uncomment this code if you want to see the line its creating
         }
-        Vector3 lookDirection = Vector3.Lerp(transform.position, mousePosition, Time.deltaTime);
+        // Turns the player to look at your mousePosition
+        Vector3 lookDirection = Vector3.Lerp(transform.position, mousePositionInWorldSpace, Time.deltaTime);
         transform.LookAt(lookDirection);    
+
     }
-    // TODO: Animate the cylinder to go back when shooting
+    // TODO: Animate the cylinder to go back when shooting like a recoil effect thing
     public IEnumerator Shoot(float time) {
         GameObject newBullet = (GameObject) Instantiate(bullet, firePoint.position, firePoint.rotation); 
         newBullet.GetComponent<Bullet>().player = true;

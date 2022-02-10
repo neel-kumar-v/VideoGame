@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TextUpdater : MonoBehaviour
+public class StatsText : MonoBehaviour
 {
     public Text countries;
     public Text goldEarned;

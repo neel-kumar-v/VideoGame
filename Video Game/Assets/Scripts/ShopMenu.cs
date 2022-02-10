@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ShopMenu : MonoBehaviour
 {
+    // This stuff most likely won't need to be changed so doon't even worry about it
     public static bool inShop = false;
     public GameObject[] uiElementsToRemove;
     public GameObject[] uiElementsToAdd;

@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    [Header("Parameters")]
+    [Header("Bullet Stats")]
     public float reload;
     public float speed;
     public float damage;
-    public bool explode;
+    public bool explosive;
     public float explosionDamage;
     public float explosionRadius;
     public float weight;
@@ -20,14 +20,15 @@ public class Bullet : MonoBehaviour
     public GameObject particles;
     public Transform playerPos;
 
-    Quaternion savedRotation;
 
     public void Start() {
-        Shoot(); 
+        Shoot(); // Move the bullet forward
+
+        // If this is a player bullet, find the enemy transform, otherwise find the player's transform
         playerPos = player ? GameObject.FindGameObjectWithTag("Player").transform : GameObject.FindGameObjectWithTag("Enemy").transform;
         transform.LookAt(playerPos);
-        transform.rotation *= Quaternion.Euler(0, -90, 0);
-        Destroy(gameObject, 5f);
+        transform.rotation *= Quaternion.Euler(0, -90, 0); // For some reason, line 29 gives a 90 degree offset, so this un-offsets it
+        Destroy(gameObject, 5f); // Only let the bullet last for 5 seconds
     }
 
     void Shoot() {
@@ -35,45 +36,45 @@ public class Bullet : MonoBehaviour
     }
 
     void Update() {
-        if(!player) {
-            // Debug.Log(pierce);
-        }
-        if(pierce <= 0) {
-            Destroy(gameObject);
-            Destroy((GameObject) Instantiate(particles, transform.position, transform.rotation), 3f);
+        if(pierce <= 0) { // Destroy the bullet immediately after it runs out fo pierce
+            DestroyBullet();
         }
     }
 
-    public void OnTriggerEnter(Collider collider) {
+    public void OnTriggerEnter(Collider collider) { // When the bullet hits something
 
         GameObject hit = collider.gameObject;
-        Bullet b = hit.GetComponent<Bullet>();
 
-        if((hit.CompareTag("Player") && player) || (hit.CompareTag("Enemy") && !player) || (hit.CompareTag("Bullet") && b.player == player)) {
-            // Debug.Log("Hit self");
+        if(hit.CompareTag("obstacle")) { // If hit an obstacle
+            DestroyBullet();
             return;
         }
-        if(hit.CompareTag("Bullet")) {
+
+        Bullet b = hit.GetComponent<Bullet>();
+
+        bool didHitSelf = (hit.CompareTag("Player") && player) || (hit.CompareTag("Enemy") && !player);
+        bool didHitOwnBullet = (hit.CompareTag("Bullet") && b.player == player);
+        if(didHitSelf || didHitOwnBullet) return;
+
+        if(hit.CompareTag("Bullet")) { // Take away pierce if hit enemy bullet
             pierce -= b.pierce;
             return;
         }
-        if(hit.CompareTag("obstacle")) {
-            Destroy((GameObject) Instantiate(particles, transform.position, transform.rotation), 3f);
-            Destroy(gameObject);
-            return;
-        }
+        
         ApplyDamage(hit, damage);
 
-        if(explode && !hit.CompareTag("Bullet")) {
-            Collider[] colliders = Physics.OverlapSphere(transform.position, explosionRadius);
+        if(explosive) { // If this bullet is explosive
+            Collider[] colliders = Physics.OverlapSphere(transform.position, explosionRadius); // Check all objects in the explosionRadius
             foreach (Collider col in colliders)
             {
+                if(col.gameObject.CompareTag("Obstacle")) return; // As long as it isn't an obstacle, apply the damage
                 ApplyDamage(col.gameObject, explosionDamage);
             }
         }
     }
 
     public void ApplyDamage(GameObject hit, float damage) {
+        // As long as it didn;t hit its own player
         if(hit.CompareTag("Player") && !player || hit.CompareTag("Enemy") && player) {
             Health health = hit.GetComponent<Health>();
             health.ApplyDamage(damage);
@@ -83,6 +84,11 @@ public class Bullet : MonoBehaviour
 
     public void OnDrawGizmosSelected() {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, explosionRadius);
+        Gizmos.DrawWireSphere(transform.position, explosionRadius); // Shows the size of the explosion radius in the editor
+    }
+
+    void DestroyBullet() {
+        Destroy((GameObject) Instantiate(particles, transform.position, transform.rotation), 3f);
+        Destroy(gameObject);
     }
 }

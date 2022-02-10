@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UpdateCurrentText : MonoBehaviour
+public class UpdateCurrentlyUsedText : MonoBehaviour
 {
     public GameManager gameManager;
     public GameObject player;

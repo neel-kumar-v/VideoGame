@@ -9,6 +9,7 @@ public class AudioManager : MonoBehaviour
     void Awake() {
         foreach (Sound s in sounds)
         {
+            // For all the objects we want to put sounds on, put the correct component and clip on it
             s.src = gameObject.AddComponent<AudioSource>();
             s.src.clip = s.clip;
         }
